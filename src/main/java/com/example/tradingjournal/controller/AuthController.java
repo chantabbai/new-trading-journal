@@ -63,5 +63,7 @@ class LoginRequest {
     private String email;
     private String password;
 
-    // getters and setters
+    // Add getters
+    public String getEmail() { return email; }
+    public String getPassword() { return password; }
 }

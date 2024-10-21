@@ -2,6 +2,7 @@ import React from 'react';
 import { useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../stores/authStore';
+import { toast } from 'react-toastify'; // Assuming you're using react-toastify for notifications
 
 type RegisterFormData = {
   name: string;
@@ -21,7 +22,7 @@ const Register: React.FC = () => {
       navigate('/dashboard');
     } catch (error) {
       console.error('Registration failed:', error);
-      // Handle registration error (e.g., show error message)
+      toast.error('Registration failed. Please try again.'); // Show error message to user
     }
   };
 
