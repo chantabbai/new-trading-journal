@@ -16,6 +16,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/auth")
+@CrossOrigin(origins = "http://localhost:5173", allowCredentials = "true")
 public class AuthController {
 
     @Autowired
@@ -54,8 +55,12 @@ public class AuthController {
             return ResponseEntity.badRequest().body("Email is already in use!");
         }
 
-        User result = userService.registerUser(user);
-        return ResponseEntity.ok(result);
+        try {
+            User result = userService.registerUser(user);
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Registration failed: " + e.getMessage());
+        }
     }
 }
 

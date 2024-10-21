@@ -1,20 +1,27 @@
 package com.example.tradingjournal.security;
 
 import io.jsonwebtoken.*;
+import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
 
+import javax.crypto.SecretKey;
 import java.util.Date;
+import java.util.Base64;
 
 @Component
 public class JwtTokenProvider {
 
-    @Value("${jwt.secret}")
-    private String jwtSecret;
+    private final SecretKey jwtSecret;
 
     @Value("${jwt.expiration}")
     private int jwtExpirationInMs;
+
+    public JwtTokenProvider(@Value("${jwt.secret}") String secret) {
+        byte[] decodedKey = Base64.getDecoder().decode(secret);
+        this.jwtSecret = Keys.hmacShaKeyFor(decodedKey);
+    }
 
     public String generateToken(Authentication authentication) {
         UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
@@ -26,13 +33,14 @@ public class JwtTokenProvider {
                 .setSubject(userPrincipal.getId())
                 .setIssuedAt(new Date())
                 .setExpiration(expiryDate)
-                .signWith(SignatureAlgorithm.HS512, jwtSecret)
+                .signWith(jwtSecret)
                 .compact();
     }
 
     public String getUserIdFromJWT(String token) {
-        Claims claims = Jwts.parser()
+        Claims claims = Jwts.parserBuilder()
                 .setSigningKey(jwtSecret)
+                .build()
                 .parseClaimsJws(token)
                 .getBody();
 
@@ -41,18 +49,10 @@ public class JwtTokenProvider {
 
     public boolean validateToken(String authToken) {
         try {
-            Jwts.parser().setSigningKey(jwtSecret).parseClaimsJws(authToken);
+            Jwts.parserBuilder().setSigningKey(jwtSecret).build().parseClaimsJws(authToken);
             return true;
-        } catch (SignatureException ex) {
-            // Invalid JWT signature
-        } catch (MalformedJwtException ex) {
+        } catch (JwtException | IllegalArgumentException ex) {
             // Invalid JWT token
-        } catch (ExpiredJwtException ex) {
-            // Expired JWT token
-        } catch (UnsupportedJwtException ex) {
-            // Unsupported JWT token
-        } catch (IllegalArgumentException ex) {
-            // JWT claims string is empty
         }
         return false;
     }
